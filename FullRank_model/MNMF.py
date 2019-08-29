@@ -15,7 +15,7 @@ from configure import *
 
 class MNMF(FCA):
 
-    def __init__(self, NUM_source=2, NUM_basis=2, xp=np, MODE_initialize_covarianceMatrix="unit", MODE_update_variable=["all", "one_by_one"][0]):
+    def __init__(self, NUM_source=2, NUM_basis=2, xp=np, MODE_initialize_covarianceMatrix="unit", MODE_update_parameter=["all", "one_by_one"][0]):
         """ initialize MNMF
 
         Parameters:
@@ -27,16 +27,16 @@ class MNMF(FCA):
             xp : numpy or cupy
             MODE_initialize_covarianceMatrix: str
                 how to initialize covariance matrix {unit, obs, cGMM}
-            MODE_update_variable: str
-                'all' : update all the variables simultanesouly
-                'one_by_one' : update one by one
+            MODE_update_parameter: str
+                'all' : update all the parameters simultanesouly to reduce computational cost
+                'one_by_one' : update the parameters one by one to monotonically increase log-likelihood
         """
-        super(MNMF, self).__init__(NUM_source=NUM_source, xp=xp, MODE_initialize_covarianceMatrix=MODE_initialize_covarianceMatrix, MODE_update_variable=MODE_update_variable)
+        super(MNMF, self).__init__(NUM_source=NUM_source, xp=xp, MODE_initialize_covarianceMatrix=MODE_initialize_covarianceMatrix, MODE_update_parameter=MODE_update_parameter)
         self.NUM_basis = NUM_basis
         self.method_name = "MNMF"
 
 
-    def set_parameter(self, NUM_source=None, NUM_iteration=None, NUM_basis=None, MODE_initialize_covarianceMatrix=None, MODE_update_variable=None):
+    def set_parameter(self, NUM_source=None, NUM_iteration=None, NUM_basis=None, MODE_initialize_covarianceMatrix=None, MODE_update_parameter=None):
         """ set parameters
 
         Parameters:
@@ -45,7 +45,7 @@ class MNMF(FCA):
                 the number of sources
             MODE_initialize_covarianceMatrix: str
                 how to initialize covariance matrix {unit, obs, cGMM}
-            MODE_update_variable: str
+            MODE_update_parameter: str
                 'all' : update all the variables simultanesouly
                 'one_by_one' : update one by one
         """
@@ -57,8 +57,8 @@ class MNMF(FCA):
             self.NUM_basis = NUM_basis
         if MODE_initialize_covarianceMatrix != None:
             self.MODE_initialize_covarianceMatrix = MODE_initialize_covarianceMatrix
-        if MODE_update_variable != None:
-            self.MODE_update_variable = MODE_update_variable
+        if MODE_update_parameter != None:
+            self.MODE_update_parameter = MODE_update_parameter
     
 
     def initialize_PSD(self):
@@ -72,7 +72,7 @@ class MNMF(FCA):
 
 
     def make_filename_suffix(self):
-        self.filename_suffix = "S={}-it={}-K={}-init={}-update={}".format(self.NUM_source, self.NUM_iteration, self.NUM_basis, self.MODE_initialize_covarianceMatrix, self.MODE_update_variable)
+        self.filename_suffix = "S={}-it={}-K={}-init={}-update={}".format(self.NUM_source, self.NUM_iteration, self.NUM_basis, self.MODE_initialize_covarianceMatrix, self.MODE_update_parameter)
 
         if hasattr(self, "file_id"):
            self.filename_suffix += "-ID={}".format(self.file_id)
@@ -81,14 +81,14 @@ class MNMF(FCA):
 
 
     def update(self):
-        if self.MODE_update_variable == "one_by_one":
+        if self.MODE_update_parameter == "one_by_one":
             self.update_axiliary_variable()
             self.update_W()
             self.update_axiliary_variable()
             self.update_H()
             self.update_axiliary_variable()
             self.update_covarianceMatrix()
-        if self.MODE_update_variable == "all":
+        if self.MODE_update_parameter == "all":
             self.update_axiliary_variable()
             self.update_WH()
             self.update_covarianceMatrix()
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     parser.add_argument(           '--NUM_basis', type= int, default=    16, help='number of basis of NMF')
     parser.add_argument(          '--NUM_source', type= int, default=     2, help='number of noise')
     parser.add_argument(       '--NUM_iteration', type= int, default=    30, help='number of iteration')
-    parser.add_argument('--MODE_update_variable', type= str, default= "all", help='all, one_by_one')
+    parser.add_argument('--MODE_update_parameter', type= str, default= "all", help='all, one_by_one')
     parser.add_argument('--MODE_initialize_covarianceMatrix', type= str, default= "obs", help='cGMM, unit, obs')
     args = parser.parse_args()
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
             spec = np.zeros([tmp.shape[0], tmp.shape[1], M], dtype=np.complex)
         spec[:, :, m] = tmp
 
-    separater = MNMF(NUM_source=args.NUM_source, NUM_basis=args.NUM_basis, xp=xp, MODE_initialize_covarianceMatrix=args.MODE_initialize_covarianceMatrix, MODE_update_variable=args.MODE_update_variable)
+    separater = MNMF(NUM_source=args.NUM_source, NUM_basis=args.NUM_basis, xp=xp, MODE_initialize_covarianceMatrix=args.MODE_initialize_covarianceMatrix, MODE_update_parameter=args.MODE_update_parameter)
     separater.load_spectrogram(spec)
     separater.file_id = args.file_id
     separater.solve(NUM_iteration=args.NUM_iteration, save_likelihood=False, save_parameter=False, save_dir="./", interval_save_parameter=100)

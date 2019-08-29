@@ -17,7 +17,7 @@ from configure import *
 
 class MNMF_DP(FCA):
 
-    def __init__(self, NUM_noise=1, NUM_Z_iteration=30, speech_VAE=None, DIM_latent=16, NUM_basis_noise=2, xp=np, MODE_initialize_covarianceMatrix="unit", MODE_update_variable=["all", "Z", "one_by_one"][1], MODE_update_Z=["sampling", "backprop"][0], normalize_input=True):
+    def __init__(self, NUM_noise=1, NUM_Z_iteration=30, speech_VAE=None, DIM_latent=16, NUM_basis_noise=2, xp=np, MODE_initialize_covarianceMatrix="unit", MODE_update_parameter=["all", "Z", "one_by_one"][1], MODE_update_Z=["sampling", "backprop"][0], normalize_input=True):
         """ initialize MNMF
 
         Parameters:
@@ -29,13 +29,13 @@ class MNMF_DP(FCA):
             xp : numpy or cupy
             MODE_initialize_covarianceMatrix: str
                 how to initialize covariance matrix {unit, obs, cGMM}
-            MODE_update_variable: str
+            MODE_update_parameter: str
                 'all' : update all the variables simultanesouly
                 'one_by_one' : update one by one
             MODE_update_Z: str
                 how to update latent variable Z {sampling, backprop}
         """
-        super(MNMF_DP, self).__init__(NUM_source=NUM_noise+1, xp=xp, MODE_initialize_covarianceMatrix=MODE_initialize_covarianceMatrix, MODE_update_variable=MODE_update_variable)
+        super(MNMF_DP, self).__init__(NUM_source=NUM_noise+1, xp=xp, MODE_initialize_covarianceMatrix=MODE_initialize_covarianceMatrix, MODE_update_parameter=MODE_update_parameter)
         self.NUM_source, self.NUM_noise, self.NUM_speech = NUM_noise+1, NUM_noise, 1
         self.NUM_basis_noise = NUM_basis_noise
         self.NUM_Z_iteration = NUM_Z_iteration
@@ -46,7 +46,7 @@ class MNMF_DP(FCA):
         self.method_name = "MNMF_DP"
 
 
-    def set_parameter(self, NUM_noise=None, NUM_iteration=None, NUM_Z_iteration=None, NUM_basis_noise=None, MODE_initialize_covarianceMatrix=None, MODE_update_variable=None, MODE_update_Z=None):
+    def set_parameter(self, NUM_noise=None, NUM_iteration=None, NUM_Z_iteration=None, NUM_basis_noise=None, MODE_initialize_covarianceMatrix=None, MODE_update_parameter=None, MODE_update_Z=None):
         """ set parameters
 
         Parameters:
@@ -55,7 +55,7 @@ class MNMF_DP(FCA):
                 the number of sources
             MODE_initialize_covarianceMatrix: str
                 how to initialize covariance matrix {unit, obs, cGMM}
-            MODE_update_variable: str
+            MODE_update_parameter: str
                 'all' : update all the variables simultanesouly
                 'Z' : update variables other than Z and then update Z
                 'one_by_one' : update one by one
@@ -71,8 +71,8 @@ class MNMF_DP(FCA):
             self.NUM_basis_noise = NUM_basis_noise
         if MODE_initialize_covarianceMatrix != None:
             self.MODE_initialize_covarianceMatrix = MODE_initialize_covarianceMatrix
-        if MODE_update_variable != None:
-            self.MODE_update_variable = MODE_update_variable
+        if MODE_update_parameter != None:
+            self.MODE_update_parameter = MODE_update_parameter
         if MODE_update_Z != None:
             self.MODE_update_Z = MODE_update_Z
 
@@ -102,7 +102,7 @@ class MNMF_DP(FCA):
 
 
     def make_filename_suffix(self):
-        self.filename_suffix = "N={}-it={}-itZ={}-Kn={}-D={}-init={}-latent={}-update={}".format(self.NUM_noise, self.NUM_iteration, self.NUM_Z_iteration, self.NUM_basis_noise, self.DIM_latent, self.MODE_initialize_covarianceMatrix, self.MODE_update_Z, self.MODE_update_variable)
+        self.filename_suffix = "N={}-it={}-itZ={}-Kn={}-D={}-init={}-latent={}-update={}".format(self.NUM_noise, self.NUM_iteration, self.NUM_Z_iteration, self.NUM_basis_noise, self.DIM_latent, self.MODE_initialize_covarianceMatrix, self.MODE_update_Z, self.MODE_update_parameter)
 
         if hasattr(self, "name_DNN"):
            self.filename_suffix += "-DNN={}".format(self.name_DNN)
@@ -118,7 +118,7 @@ class MNMF_DP(FCA):
 
 
     def update(self):
-        if self.MODE_update_variable == "one_by_one":
+        if self.MODE_update_parameter == "one_by_one":
             self.update_axiliary_variable()
             self.update_W_noise()
             self.update_axiliary_variable()
@@ -132,14 +132,14 @@ class MNMF_DP(FCA):
             self.update_axiliary_variable()
             self.update_Z_speech(calc_constant=True)
             self.normalize()
-        elif self.MODE_update_variable == "all":
+        elif self.MODE_update_parameter == "all":
             self.update_axiliary_variable_and_Z()
             self.update_WH_noise()
             self.update_covarianceMatrix()
             self.update_UV()
             self.update_Z_speech(calc_constant=False)
             self.normalize()
-        elif self.MODE_update_variable == "Z":
+        elif self.MODE_update_parameter == "Z":
             self.update_axiliary_variable_and_Z()
             self.update_WH_noise()
             self.update_covarianceMatrix()
@@ -370,10 +370,10 @@ if __name__ == "__main__":
     parser.add_argument(           '--NUM_noise', type= int, default=     1, help='number of noise')
     parser.add_argument(          '--DIM_latent', type= int, default=    16, help='dimention of encoded vector')
     parser.add_argument(       '--MODE_update_Z', type= str, default="sampling", help='sampling, sampling2, backprop, backprop2, hybrid, hybrid2')
-    parser.add_argument(       '--NUM_iteration', type= int, default=   100, help='number of iteration')
+    parser.add_argument(       '--NUM_iteration', type= int, default=    30, help='number of iteration')
     parser.add_argument(     '--NUM_Z_iteration', type= int, default=    30, help='number of update Z iteration')
     parser.add_argument(     '--NUM_basis_noise', type= int, default=    64, help='number of basis of noise (MODE_noise=NMF)')
-    parser.add_argument('--MODE_update_variable', type= str, default= "all", help='all, one_by_one')
+    parser.add_argument('--MODE_update_parameter', type= str, default= "all", help='all, one_by_one')
     parser.add_argument('--MODE_initialize_covarianceMatrix', type=  str, default="obs", help='cGMM, unit, obs')
     args = parser.parse_args()
 
@@ -402,9 +402,9 @@ if __name__ == "__main__":
             spec = np.zeros([tmp.shape[0], tmp.shape[1], M], dtype=np.complex)
         spec[:, :, m] = tmp
 
-    separater = MNMF_DP(NUM_noise=args.NUM_noise, NUM_Z_iteration=args.NUM_Z_iteration, speech_VAE=speech_VAE, DIM_latent=args.DIM_latent, NUM_basis_noise=args.NUM_basis_noise, xp=xp, MODE_initialize_covarianceMatrix=args.MODE_initialize_covarianceMatrix, MODE_update_variable=args.MODE_update_variable)
+    separater = MNMF_DP(NUM_noise=args.NUM_noise, NUM_Z_iteration=args.NUM_Z_iteration, speech_VAE=speech_VAE, DIM_latent=args.DIM_latent, NUM_basis_noise=args.NUM_basis_noise, xp=xp, MODE_initialize_covarianceMatrix=args.MODE_initialize_covarianceMatrix, MODE_update_parameter=args.MODE_update_parameter)
 
     separater.load_spectrogram(spec)
     separater.name_DNN = name_DNN
     separater.file_id = args.file_id
-    separater.solve(NUM_iteration=args.NUM_iteration, save_likelihood=True, save_parameter=True, save_dir="./", interval_save_parameter=100)
+    separater.solve(NUM_iteration=args.NUM_iteration, save_likelihood=False, save_parameter=False, save_dir="./", interval_save_parameter=100)

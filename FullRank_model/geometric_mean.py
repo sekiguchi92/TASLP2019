@@ -7,6 +7,7 @@ import numpy as np
 sys.path.append("../CupyLibrary")
 try:
     from chainer import cuda
+    import cupy as cp
     FLAG_GPU_Available = True
 except:
     print("---Warning--- You cannot use GPU acceleration because chainer or cupy is not installed")
@@ -20,7 +21,7 @@ except:
     FLAG_CupyInverse_Enabled = False
 
 try:
-    from cupy_eig import det_Hermitian
+    import cupy_eig
     FLAG_CupyDeterminant_Enabled = True
 except:
     print("---Warning--- You cannot use cupy complex determinant")
