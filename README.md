@@ -3,7 +3,8 @@ The code for multi-channel speech enhancement which will be published in TASLP20
   - FCA is a method for general source separation. In fact, it can be available only for speech enhancement because of the strong initial value dependency.
   - MNMF is a general source separation method which integrate NMF-based source model into FCA.
   - MNMF-DP is a method which integrates deep speech prior into MNMF, and is for speech enhancement.
-  - ILRMA and ILRMA-DP will be updated soon.
+  - ILRMA is a general source separation method which integrate NMF-based source model into rank-1 spatial model.
+  - ILRMA-DP is a method which integrates deep speech prior into ILRMA, and is for speech enhancement.
 
 ## Requirement
 * Tested on Python3.6
