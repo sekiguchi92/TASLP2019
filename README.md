@@ -1,5 +1,6 @@
 # TASLP2019
-The code for multi-channel speech enhancement which will be published in TASLP2019.
+The code for multi-channel speech enhancement which will be published in TASLP2019.  
+The latest version is available in https://github.com/sekiguchi92/SpeechEnhancement.
   - FCA is a method for general source separation. In fact, it can be available only for speech enhancement because of the strong initial value dependency.
   - MNMF is a general source separation method which integrate NMF-based source model into FCA.
   - MNMF-DP is a method which integrates deep speech prior into MNMF, and is for speech enhancement.
